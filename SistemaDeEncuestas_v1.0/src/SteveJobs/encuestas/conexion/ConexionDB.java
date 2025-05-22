@@ -2,7 +2,7 @@
 Autores:
 - Gian Fri
 - José Flores
-
+- Pendiente de revisión
 */
 package SteveJobs.encuestas.conexion;
 
