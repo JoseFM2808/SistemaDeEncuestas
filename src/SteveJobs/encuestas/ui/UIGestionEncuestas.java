@@ -130,7 +130,7 @@ public class UIGestionEncuestas {
         String definicionPerfil = JOptionPane.showInputDialog(null, "Definición del perfil del encuestado (ej. Criterios en texto o JSON):", "Crear Encuesta", JOptionPane.PLAIN_MESSAGE);
 
 
-        int idAdmin = (adminLogueado != null) ? adminLogueado.getIdUsuario() : 0;
+        int idAdmin = (adminLogueado != null) ? adminLogueado.getId_usuario() : 0; // Corregido getIdUsuario a getId_usuario
 
         int idNuevaEncuesta = servicioEncuestas.registrarNuevaEncuesta(nombre, descripcion, fechaInicio, fechaFin, publicoObjetivo, definicionPerfil, idAdmin);
 

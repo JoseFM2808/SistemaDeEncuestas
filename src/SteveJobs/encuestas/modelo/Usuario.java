@@ -23,12 +23,13 @@ public class Usuario {
     private String genero;
     private String distrito_residencia;
     private Timestamp fecha_registro;
+    private String rol; // Nuevo campo para el rol del usuario
 
     // Constructores
     public Usuario() {
     }
 
-    public Usuario(int id_usuario, String dni, String nombres, String apellidos, String email, String clave, LocalDate fecha_nacimiento, String genero, String distrito_residencia, Timestamp fecha_registro) {
+    public Usuario(int id_usuario, String dni, String nombres, String apellidos, String email, String clave, LocalDate fecha_nacimiento, String genero, String distrito_residencia, Timestamp fecha_registro, String rol) {
         this.id_usuario = id_usuario;
         this.dni = dni;
         this.nombres = nombres;
@@ -39,6 +40,7 @@ public class Usuario {
         this.genero = genero;
         this.distrito_residencia = distrito_residencia;
         this.fecha_registro = fecha_registro;
+        this.rol = rol; // Asignar rol
     }
 
     // Getters y Setters
@@ -122,6 +124,14 @@ public class Usuario {
         this.fecha_registro = fecha_registro;
     }
 
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
+
     @Override
     public String toString() {
         return "Usuario{" +
@@ -131,6 +141,7 @@ public class Usuario {
                 ", apellidos='" + apellidos + ''' +
                 ", email='" + email + ''' +
                 // No incluir clave en toString por seguridad
+                ", rol='" + rol + ''' + // Incluir rol en toString
                 ", fecha_nacimiento=" + fecha_nacimiento +
                 ", genero='" + genero + ''' +
                 ", distrito_residencia='" + distrito_residencia + ''' +
