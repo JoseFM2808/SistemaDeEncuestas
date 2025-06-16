@@ -1,56 +1,54 @@
 /*
-Autor: Alfredo Swidin
+ * Módulo Responsable: Admin. de Encuestas
+ * Autores: Alfredo Swidin
+ * Versión: 2.0 (Reescritura)
+ * Fecha: 15/06/2025
+ *
+ * Descripción del Archivo:
+ * Clase POJO para representar la entidad 'Encuestas'.
  */
 package SteveJobs.encuestas.modelo;
 
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.ArrayList;
 
 public class Encuesta {
-
-    private int idEncuesta;
-    private String nombreEncuesta;
+    private int id_encuesta;
+    private String nombre;
     private String descripcion;
-    private Timestamp fechaInicioVigencia;
-    private Timestamp fechaFinVigencia;
-    private int publicoObjetivoCantidad;
-    private String definicionPerfil;
+    private Timestamp fecha_inicio;
+    private Timestamp fecha_fin;
+    private String perfil_requerido; // JSON como String
     private String estado;
-    private Timestamp fechaCreacionEncuesta;
-    private int idAdminCreador;
-    private List<EncuestaDetallePregunta> preguntasAsociadas;
 
+    // Constructores
     public Encuesta() {
-        this.preguntasAsociadas = new ArrayList<>();
     }
 
-    public Encuesta(String nombreEncuesta, String descripcion, Timestamp fechaInicioVigencia, Timestamp fechaFinVigencia, int publicoObjetivoCantidad, String definicionPerfil, int idAdminCreador) {
-        this.nombreEncuesta = nombreEncuesta;
+    public Encuesta(int id_encuesta, String nombre, String descripcion, Timestamp fecha_inicio, Timestamp fecha_fin, String perfil_requerido, String estado) {
+        this.id_encuesta = id_encuesta;
+        this.nombre = nombre;
         this.descripcion = descripcion;
-        this.fechaInicioVigencia = fechaInicioVigencia;
-        this.fechaFinVigencia = fechaFinVigencia;
-        this.publicoObjetivoCantidad = publicoObjetivoCantidad;
-        this.definicionPerfil = definicionPerfil;
-        this.idAdminCreador = idAdminCreador;
-        this.estado = "Borrador";
-        this.preguntasAsociadas = new ArrayList<>();
-    }
-    
-    public int getIdEncuesta() {
-        return idEncuesta;
+        this.fecha_inicio = fecha_inicio;
+        this.fecha_fin = fecha_fin;
+        this.perfil_requerido = perfil_requerido;
+        this.estado = estado;
     }
 
-    public void setIdEncuesta(int idEncuesta) {
-        this.idEncuesta = idEncuesta;
+    // Getters y Setters
+    public int getId_encuesta() {
+        return id_encuesta;
     }
 
-    public String getNombreEncuesta() {
-        return nombreEncuesta;
+    public void setId_encuesta(int id_encuesta) {
+        this.id_encuesta = id_encuesta;
     }
 
-    public void setNombreEncuesta(String nombreEncuesta) {
-        this.nombreEncuesta = nombreEncuesta;
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
     public String getDescripcion() {
@@ -61,36 +59,28 @@ public class Encuesta {
         this.descripcion = descripcion;
     }
 
-    public Timestamp getFechaInicioVigencia() {
-        return fechaInicioVigencia;
+    public Timestamp getFecha_inicio() {
+        return fecha_inicio;
     }
 
-    public void setFechaInicioVigencia(Timestamp fechaInicioVigencia) {
-        this.fechaInicioVigencia = fechaInicioVigencia;
+    public void setFecha_inicio(Timestamp fecha_inicio) {
+        this.fecha_inicio = fecha_inicio;
     }
 
-    public Timestamp getFechaFinVigencia() {
-        return fechaFinVigencia;
+    public Timestamp getFecha_fin() {
+        return fecha_fin;
     }
 
-    public void setFechaFinVigencia(Timestamp fechaFinVigencia) {
-        this.fechaFinVigencia = fechaFinVigencia;
+    public void setFecha_fin(Timestamp fecha_fin) {
+        this.fecha_fin = fecha_fin;
     }
 
-    public int getPublicoObjetivoCantidad() {
-        return publicoObjetivoCantidad;
+    public String getPerfil_requerido() {
+        return perfil_requerido;
     }
 
-    public void setPublicoObjetivoCantidad(int publicoObjetivoCantidad) {
-        this.publicoObjetivoCantidad = publicoObjetivoCantidad;
-    }
-
-    public String getDefinicionPerfil() {
-        return definicionPerfil;
-    }
-
-    public void setDefinicionPerfil(String definicionPerfil) {
-        this.definicionPerfil = definicionPerfil;
+    public void setPerfil_requerido(String perfil_requerido) {
+        this.perfil_requerido = perfil_requerido;
     }
 
     public String getEstado() {
@@ -101,44 +91,16 @@ public class Encuesta {
         this.estado = estado;
     }
 
-    public Timestamp getFechaCreacionEncuesta() {
-        return fechaCreacionEncuesta;
-    }
-
-    public void setFechaCreacionEncuesta(Timestamp fechaCreacionEncuesta) {
-        this.fechaCreacionEncuesta = fechaCreacionEncuesta;
-    }
-
-    public int getIdAdminCreador() {
-        return idAdminCreador;
-    }
-
-    public void setIdAdminCreador(int idAdminCreador) {
-        this.idAdminCreador = idAdminCreador;
-    }
-
-    public List<EncuestaDetallePregunta> getPreguntasAsociadas() {
-        return preguntasAsociadas;
-    }
-
-    public void setPreguntasAsociadas(List<EncuestaDetallePregunta> preguntasAsociadas) {
-        this.preguntasAsociadas = preguntasAsociadas;
-    }
-    
     @Override
     public String toString() {
         return "Encuesta{" +
-                "idEncuesta=" + idEncuesta +
-                ", nombreEncuesta='" + nombreEncuesta + '\'' +
-                ", descripcion='" + descripcion + '\'' +
-                ", fechaInicioVigencia=" + fechaInicioVigencia +
-                ", fechaFinVigencia=" + fechaFinVigencia +
-                ", publicoObjetivoCantidad=" + publicoObjetivoCantidad +
-                ", definicionPerfil='" + definicionPerfil + '\'' +
-                ", estado='" + estado + '\'' +
-                ", fechaCreacionEncuesta=" + fechaCreacionEncuesta +
-                ", idAdminCreador=" + idAdminCreador +
-                ", preguntasAsociadas=" + (preguntasAsociadas != null ? preguntasAsociadas.size() : "0") + " preguntas" +
+                "id_encuesta=" + id_encuesta +
+                ", nombre='" + nombre + ''' +
+                ", descripcion='" + descripcion + ''' +
+                ", fecha_inicio=" + fecha_inicio +
+                ", fecha_fin=" + fecha_fin +
+                ", perfil_requerido='" + perfil_requerido + ''' +
+                ", estado='" + estado + ''' +
                 '}';
     }
 }
