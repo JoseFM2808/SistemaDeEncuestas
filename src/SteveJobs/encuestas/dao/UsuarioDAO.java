@@ -327,6 +327,32 @@ public class UsuarioDAO {
         return usuarios;
     }
 
+    /**
+     * Valida las credenciales de un usuario.
+     * Busca un usuario por email y compara su clave almacenada con la proporcionada.
+     *
+     * @param email El email del usuario a validar.
+     * @param clave La clave proporcionada para la validación.
+     * @return El objeto {@link Usuario} si el email existe y la clave coincide, {@code null} en caso contrario.
+     */
+    public Usuario validarUsuario(String email, String clave) {
+        Usuario usuario = obtenerUsuarioPorEmail(email);
+
+        if (usuario != null) {
+            // Comparación directa de claves. Si se usara hashing,
+            // aquí se compararía el hash de la clave proporcionada con la almacenada.
+            if (usuario.getClave().equals(clave)) {
+                System.out.println("UsuarioDAO: Usuario '" + email + "' validado exitosamente.");
+                return usuario;
+            } else {
+                System.out.println("UsuarioDAO: Clave incorrecta para el usuario '" + email + "'.");
+            }
+        } else {
+            System.out.println("UsuarioDAO: No se encontró usuario con email '" + email + "' para validación.");
+        }
+        return null;
+    }
+
     // --- FIN DE MÉTODOS CRUD ---
 
     // --- INICIO DE MÉTODOS AUXILIARES ---

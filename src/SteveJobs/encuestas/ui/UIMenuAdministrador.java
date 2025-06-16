@@ -52,10 +52,10 @@ public class UIMenuAdministrador {
                     JOptionPane.showMessageDialog(null, "Funcionalidad 'Gestionar Clasificaciones de Pregunta' pendiente.");
                     break;
                 case "Gestionar Banco de Preguntas":
-                    JOptionPane.showMessageDialog(null, "Funcionalidad 'Gestionar Banco de Preguntas' pendiente.");
+                    UIGestionBancoPreguntas.mostrarMenu(admin); // Llamada a la nueva UI
                     break;
                 case "Gestionar Encuestas":
-                    JOptionPane.showMessageDialog(null, "Funcionalidad 'Gestionar Encuestas' pendiente.");
+                    UIGestionEncuestas.mostrarMenu(admin); // Llamada a la UI de Gestión de Encuestas
                     break;
                 case "Ver Resultados de Encuestas":
                     JOptionPane.showMessageDialog(null, "Funcionalidad 'Ver Resultados de Encuestas' pendiente.");
