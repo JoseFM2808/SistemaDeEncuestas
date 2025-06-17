@@ -1,3 +1,10 @@
+/*
+ * Autores del Módulo:
+ * - Pablo Alegre
+ *
+ * Responsabilidad Principal:
+ * - Acceso a datos de banco de preguntas
+ */
 package SteveJobs.encuestas.dao;
 
 import SteveJobs.encuestas.modelo.PreguntaBanco;

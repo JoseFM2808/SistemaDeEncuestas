@@ -1,5 +1,11 @@
+/*
+ * Autores del Módulo:
+ * - Pablo Alegre
+ *
+ * Responsabilidad Principal:
+ * - Lógica de negocio para banco de preguntas
+ */
 package SteveJobs.encuestas.servicio;
-
 import SteveJobs.encuestas.modelo.PreguntaBanco;
 import SteveJobs.encuestas.dao.PreguntaBancoDAO;
 import java.util.List;

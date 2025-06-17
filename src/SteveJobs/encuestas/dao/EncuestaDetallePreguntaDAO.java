@@ -1,5 +1,9 @@
 /*
-Autor: Alfredo Swidin
+ * Autores del Módulo:
+ * - Alfredo Swidin
+ *
+ * Responsabilidad Principal:
+ * - Acceso a datos de preguntas detalle de encuesta
  */
 package SteveJobs.encuestas.dao;
 

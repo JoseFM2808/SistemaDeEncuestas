@@ -1,8 +1,10 @@
 /*
-Autor: Gian Fri
-
-*/
-
+ * Autores del Módulo:
+ * - Pablo Alegre
+ *
+ * Responsabilidad Principal:
+ * - UI para registro de usuarios
+ */
 package SteveJobs.encuestas.ui;
 
 import SteveJobs.encuestas.servicio.ServicioUsuarios;
@@ -71,28 +73,37 @@ public class UIRegistroUsuario {
             return;
         }
 
-        String[] tiposUsuario = {"Administrador", "Encuestado"};
-        tipoUsuarioSeleccionado = (String) JOptionPane.showInputDialog(
-                null,
-                "Seleccione el Tipo de Usuario:",
-                "Registro de Usuario - Tipo",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                tiposUsuario,
-                tiposUsuario[0]
-        );
-        if (tipoUsuarioSeleccionado == null) { 
-            return;
-        }
+        // String[] tiposUsuario = {"Administrador", "Encuestado"}; // No permitir selección de rol en auto-registro
+        // tipoUsuarioSeleccionado = (String) JOptionPane.showInputDialog(
+        //         null,
+        //         "Seleccione el Tipo de Usuario:",
+        //         "Registro de Usuario - Tipo",
+        //         JOptionPane.QUESTION_MESSAGE,
+        //         null,
+        //         tiposUsuario,
+        //         tiposUsuario[0]
+        // );
+        // if (tipoUsuarioSeleccionado == null) {
+        //     return;
+        // }
+        // Por defecto, el rol para auto-registro es "Encuestado"
+        String rolPorDefecto = "Encuestado";
 
         ServicioUsuarios servicioUsuarios = new ServicioUsuarios();
 
+        // Adaptar la llamada al nuevo método registrarNuevoUsuario
+        // Se asume que "nombres" contiene tanto nombres como apellidos para esta adaptación.
+        // Los campos fecha_nacimiento, genero, distrito_residencia no se recogen en este UI.
         boolean registrado = servicioUsuarios.registrarNuevoUsuario(
-                docId.trim(),
-                nombres.trim(),
-                email.trim(),
-                password,
-                tipoUsuarioSeleccionado
+                docId.trim(),       // dni
+                nombres.trim(),     // nombres
+                "",                 // apellidos (dejado vacío o se podría intentar un split de 'nombres')
+                email.trim(),       // email
+                password,           // clave
+                null,               // fecha_nacimiento
+                null,               // genero
+                null,               // distrito_residencia
+                rolPorDefecto       // rol
         );
 
         if (registrado) {

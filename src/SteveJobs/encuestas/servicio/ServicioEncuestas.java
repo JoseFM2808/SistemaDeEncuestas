@@ -1,3 +1,10 @@
+/*
+ * Autores del Módulo:
+ * - Alfredo Swidin
+ *
+ * Responsabilidad Principal:
+ * - Lógica de negocio para encuestas
+ */
 package SteveJobs.encuestas.servicio;
 
 import SteveJobs.encuestas.dao.EncuestaDAO;
@@ -5,7 +12,7 @@ import SteveJobs.encuestas.dao.EncuestaDetallePreguntaDAO;
 import SteveJobs.encuestas.dao.PreguntaBancoDAO;
 import SteveJobs.encuestas.dao.TipoPreguntaDAO;
 import SteveJobs.encuestas.dao.ClasificacionPreguntaDAO;
-import SteveJobs.encuestas.dao.RespuestaUsuarioDAO; // Importar RespuestaUsuarioDAO
+import SteveJobs.encuestas.dao.RespuestaUsuarioDAO; // Necesario para obtenerEncuestasActivasParaUsuario
 import SteveJobs.encuestas.modelo.Encuesta;
 import SteveJobs.encuestas.modelo.EncuestaDetallePregunta;
 import SteveJobs.encuestas.modelo.PreguntaBanco;
@@ -27,7 +34,6 @@ public class ServicioEncuestas {
     private PreguntaBancoDAO preguntaBancoDAO;
     private TipoPreguntaDAO tipoPreguntaDAO;
     private ClasificacionPreguntaDAO clasificacionPreguntaDAO;
-    private RespuestaUsuarioDAO respuestaUsuarioDAO; // Añadir RespuestaUsuarioDAO
 
     public ServicioEncuestas() {
         this.encuestaDAO = new EncuestaDAO();
@@ -35,26 +41,8 @@ public class ServicioEncuestas {
         this.preguntaBancoDAO = new PreguntaBancoDAO();
         this.tipoPreguntaDAO = new TipoPreguntaDAO();
         this.clasificacionPreguntaDAO = new ClasificacionPreguntaDAO();
-        this.respuestaUsuarioDAO = new RespuestaUsuarioDAO(); // Inicializar RespuestaUsuarioDAO
     }
 
-    /**
-     * Registra una nueva encuesta en el sistema.
-     *
-     * Realiza validaciones sobre los datos de entrada antes de proceder con la creación.
-     * La encuesta se crea inicialmente en estado "Borrador" y se le asigna una fecha de creación.
-     *
-     * @param nombre El nombre de la encuesta. No debe ser nulo ni vacío.
-     * @param descripcion Una descripción detallada de la encuesta. Puede ser nula o vacía.
-     * @param fechaInicio La fecha y hora de inicio de vigencia de la encuesta. No debe ser nula.
-     * @param fechaFin La fecha y hora de fin de vigencia de la encuesta. No debe ser nula y debe ser posterior o igual a {@code fechaInicio}.
-     * @param publicoObjetivo La cantidad estimada de participantes para la encuesta. No debe ser un número negativo.
-     * @param definicionPerfil Una descripción del perfil del público objetivo de la encuesta. Puede ser nula o vacía.
-     * @param idAdmin El ID del usuario administrador que crea la encuesta.
-     * @return El ID de la encuesta recién creada si el registro es exitoso. Retorna -1 si ocurre algún error
-     *         durante la validación (e.g., nombre vacío, fechas inválidas, público objetivo negativo) o si falla la
-     *         creación en la capa DAO.
-     */
     public int registrarNuevaEncuesta(String nombre, String descripcion, Timestamp fechaInicio, Timestamp fechaFin, int publicoObjetivo, String definicionPerfil, int idAdmin) {
         if (nombre == null || nombre.trim().isEmpty()) {
             System.err.println("Servicio: El nombre de la encuesta es obligatorio.");
@@ -98,8 +86,38 @@ public class ServicioEncuestas {
         }
     }
     
+    /**
+     * Obtiene todas las encuestas de la base de datos y las ordena alfabéticamente por nombre
+     * utilizando el algoritmo de Insertion Sort.
+     *
+     * @return Una lista de {@link Encuesta} ordenadas por nombre.
+     */
     public List<Encuesta> obtenerTodasLasEncuestas() {
-        return encuestaDAO.obtenerTodasLasEncuestas();
+        List<Encuesta> encuestas = encuestaDAO.obtenerTodasLasEncuestas();
+        if (encuestas == null || encuestas.size() <= 1) {
+            return encuestas; // No necesita ordenación o ya está "ordenada"
+        }
+
+        // Implementación de Insertion Sort
+        for (int i = 1; i < encuestas.size(); i++) {
+            Encuesta encuestaActual = encuestas.get(i);
+            String nombreActual = encuestaActual.getNombreEncuesta() != null ? encuestaActual.getNombreEncuesta() : "";
+            int j = i - 1;
+
+            // Mover elementos de encuestas[0..i-1] que son mayores que nombreActual
+            // a una posición adelante de su posición actual
+            while (j >= 0) {
+                String nombreJ = encuestas.get(j).getNombreEncuesta() != null ? encuestas.get(j).getNombreEncuesta() : "";
+                if (nombreJ.compareToIgnoreCase(nombreActual) > 0) {
+                    encuestas.set(j + 1, encuestas.get(j));
+                    j = j - 1;
+                } else {
+                    break; // El elemento actual ya está en su posición correcta relativa a los anteriores
+                }
+            }
+            encuestas.set(j + 1, encuestaActual);
+        }
+        return encuestas;
     }
 
 
@@ -171,23 +189,6 @@ public class ServicioEncuestas {
         return true; 
     }
 
-    /**
-     * Cambia el estado de una encuesta existente.
-     *
-     * Antes de cambiar el estado a "Activa", se realizan varias validaciones:
-     * 1. La encuesta debe tener exactamente 12 preguntas asociadas.
-     * 2. La encuesta debe tener una definición de perfil de público objetivo no vacía.
-     * 3. La fecha de fin de vigencia de la encuesta no debe haber pasado.
-     *
-     * Si alguna de estas condiciones no se cumple al intentar activar, el cambio de estado fallará
-     * y se registrará un mensaje de error. Para otros cambios de estado, no se aplican estas validaciones específicas.
-     *
-     * @param idEncuesta El ID de la encuesta cuyo estado se desea cambiar.
-     * @param nuevoEstado El nuevo estado para la encuesta (e.g., "Activa", "Borrador", "Cerrada").
-     * @return {@code true} si el estado se actualizó correctamente en la base de datos,
-     *         {@code false} si la encuesta no se encontró, si las validaciones para activar no se cumplen,
-     *         o si falla la actualización en el DAO.
-     */
     public boolean cambiarEstadoEncuesta(int idEncuesta, String nuevoEstado) {
         Encuesta encuesta = encuestaDAO.obtenerEncuestaPorId(idEncuesta);
         if (encuesta == null) {
@@ -223,76 +224,20 @@ public class ServicioEncuestas {
         return encuestaDAO.eliminarEncuesta(idEncuesta);
     }
 
-    /**
-     * Obtiene una lista de encuestas activas que un usuario específico aún no ha respondido.
-     *
-     * El filtrado de encuestas se realiza bajo los siguientes criterios:
-     * 1. La encuesta debe estar en estado "Activa".
-     * 2. El usuario no debe haber respondido previamente a la encuesta.
-     * 3. (Simplificado) No se realiza un filtrado complejo por perfil del usuario contra {@code Encuesta.definicionPerfil}.
-     *    Cualquier encuesta activa y no respondida se considera disponible si {@code definicionPerfil} es general.
-     *    Una futura mejora podría implicar un matching más detallado si el perfil del usuario y de la encuesta
-     *    tuvieran campos estructurados para ello (e.g., roles, etiquetas).
-     *
-     * @param usuario El {@link Usuario} para el cual se buscan encuestas disponibles.
-     * @return Una lista de objetos {@link Encuesta} que están activas y pendientes de respuesta por el usuario.
-     *         Puede devolver una lista vacía si no hay encuestas disponibles o si el usuario es nulo.
-     */
     public List<Encuesta> obtenerEncuestasActivasParaUsuario(Usuario usuario) {
-        if (usuario == null) {
-            System.err.println("ServicioEncuestas: Usuario nulo, no se pueden obtener encuestas activas.");
-            return new ArrayList<>();
-        }
 
-        List<Encuesta> todasLasEncuestas = encuestaDAO.obtenerTodasLasEncuestas();
-        List<Encuesta> encuestasDisponibles = new ArrayList<>();
-
-        for (Encuesta encuesta : todasLasEncuestas) {
-            if ("Activa".equalsIgnoreCase(encuesta.getEstado())) {
-                // Verificar si el usuario ya respondió esta encuesta
-                boolean haRespondido = respuestaUsuarioDAO.haRespondidoEncuesta(usuario.getId_usuario(), encuesta.getIdEncuesta());
-                if (!haRespondido) {
-                    // Lógica de filtrado por perfil (simplificada):
-                    // Si definicionPerfil no es restrictiva (ej. vacía o un placeholder general), se añade.
-                    // O si hubiera un campo 'rolTarget' en Encuesta y coincidiera con usuario.getRol().
-                    // Por ahora, si es activa y no respondida, se considera disponible.
-                    // Una implementación más compleja de perfiles necesitaría más estructura en los modelos.
-                    // System.out.println("Servicio: Considerando encuesta ID " + encuesta.getIdEncuesta() + " para usuario ID " + usuario.getId_usuario() + ". Perfil: " + encuesta.getDefinicionPerfil());
-                    encuestasDisponibles.add(encuesta);
-                }
+        System.out.println("Servicio: obtenerEncuestasActivasParaUsuario - Lógica de filtrado por perfil PENDIENTE.");
+        List<Encuesta> todasActivas = encuestaDAO.obtenerTodasLasEncuestas();
+        List<Encuesta> activasFiltradas = new ArrayList<>();
+        for(Encuesta e : todasActivas){
+            if("Activa".equalsIgnoreCase(e.getEstado())){
+                activasFiltradas.add(e);
             }
         }
-        System.out.println("Servicio: Encontradas " + encuestasDisponibles.size() + " encuestas activas y no respondidas para el usuario ID " + usuario.getId_usuario());
-        return encuestasDisponibles;
+        return activasFiltradas;
     }
 
-    public int contarEncuestasActivas() {
-        List<Encuesta> todasEncuestas = encuestaDAO.obtenerTodasLasEncuestas();
-        int contador = 0;
-        if (todasEncuestas != null) {
-            for (Encuesta e : todasEncuestas) {
-                if ("Activa".equalsIgnoreCase(e.getEstado())) {
-                    contador++;
-                }
-            }
-        }
-        return contador;
-    }
 
-    /**
-     * Asocia una pregunta existente del banco de preguntas a una encuesta específica.
-     *
-     * Verifica que la encuesta no exceda el límite de 12 preguntas y que la pregunta
-     * del banco exista antes de crear la asociación.
-     *
-     * @param idEncuesta El ID de la encuesta a la que se asociará la pregunta.
-     * @param idPreguntaBanco El ID de la pregunta en el banco de preguntas.
-     * @param orden El orden en que esta pregunta aparecerá en la encuesta.
-     * @param esDescarte {@code true} si la pregunta es de descarte, {@code false} en caso contrario.
-     * @param criterioDescarte El criterio de descarte si {@code esDescarte} es {@code true}. Puede ser {@code null} o vacío si no es de descarte.
-     * @return {@code true} si la pregunta se asoció exitosamente, {@code false} si se alcanzó el límite de preguntas,
-     *         la pregunta del banco no existe, o falla la operación en el DAO.
-     */
     public boolean asociarPreguntaDelBancoAEncuesta(int idEncuesta, int idPreguntaBanco, int orden, boolean esDescarte, String criterioDescarte) {
         if (encuestaDetalleDAO.contarPreguntasEnEncuesta(idEncuesta) >= 12) {
             System.err.println("Servicio: La encuesta ID " + idEncuesta + " ya tiene 12 preguntas.");
@@ -337,17 +282,6 @@ public class ServicioEncuestas {
         return encuestaDetalleDAO.agregarPreguntaAEncuesta(detalle);
     }
 
-    /**
-     * Marca una pregunta específica dentro de una encuesta como pregunta de descarte.
-     *
-     * La pregunta de descarte se identifica por su ID de detalle en la encuesta.
-     * Se requiere un criterio de descarte no vacío.
-     *
-     * @param idEncuestaDetalle El ID del detalle de la pregunta en la encuesta (no el ID de la pregunta en el banco).
-     * @param criterioDescarte El valor o criterio que define el descarte. No debe ser nulo ni vacío.
-     * @return {@code true} si la pregunta se marcó como descarte exitosamente, {@code false} si la pregunta no se encuentra,
-     *         el criterio es inválido, o falla la actualización en el DAO.
-     */
     public boolean marcarPreguntaComoDescarte(int idEncuestaDetalle, String criterioDescarte) {
         EncuestaDetallePregunta detalle = encuestaDetalleDAO.obtenerPreguntaDetallePorId(idEncuestaDetalle);
         if (detalle == null) {
@@ -363,16 +297,6 @@ public class ServicioEncuestas {
         return encuestaDetalleDAO.actualizarDetallePregunta(detalle);
     }
 
-    /**
-     * Desmarca una pregunta específica dentro de una encuesta como pregunta de descarte.
-     *
-     * La pregunta se identifica por su ID de detalle en la encuesta.
-     * El criterio de descarte se establece como {@code null}.
-     *
-     * @param idEncuestaDetalle El ID del detalle de la pregunta en la encuesta.
-     * @return {@code true} si la pregunta se desmarcó exitosamente, {@code false} si la pregunta no se encuentra
-     *         o falla la actualización en el DAO.
-     */
     public boolean desmarcarPreguntaComoDescarte(int idEncuestaDetalle) {
         EncuestaDetallePregunta detalle = encuestaDetalleDAO.obtenerPreguntaDetallePorId(idEncuestaDetalle);
         if (detalle == null) {
@@ -392,13 +316,6 @@ public class ServicioEncuestas {
     return encuestaDetalleDAO.eliminarPreguntaDeEncuesta(idEncuestaDetalle);
     }
 
-    /**
-     * Obtiene todas las preguntas asociadas a una encuesta específica.
-     *
-     * @param idEncuesta El ID de la encuesta cuyas preguntas se desean obtener.
-     * @return Una lista de objetos {@link EncuestaDetallePregunta}.
-     *         La lista puede estar vacía si la encuesta no tiene preguntas asociadas o si no existe.
-     */
     public List<EncuestaDetallePregunta> obtenerPreguntasDeEncuesta(int idEncuesta) {
         return encuestaDetalleDAO.obtenerPreguntasPorEncuesta(idEncuesta);
     }
@@ -480,5 +397,76 @@ public class ServicioEncuestas {
             encuesta.setPreguntasAsociadas(preguntas);
         }
         return encuesta;
+    }
+
+    /**
+     * Busca una encuesta específica por su ID dentro de una lista de encuestas dada,
+     * utilizando el algoritmo de Binary Search.
+     * La lista proporcionada se copia y se ordena por ID antes de la búsqueda para
+     * asegurar el pre-requisito de Binary Search sin modificar la lista original.
+     *
+     * @param listaEncuestas La lista de encuestas en la que buscar.
+     * @param idEncuestaBuscada El ID de la encuesta a encontrar.
+     * @return La {@link Encuesta} encontrada, o {@code null} si no se encuentra en la lista.
+     */
+    public Encuesta buscarEncuestaEnListaPorId(List<Encuesta> listaEncuestas, int idEncuestaBuscada) {
+        if (listaEncuestas == null || listaEncuestas.isEmpty()) {
+            return null;
+        }
+
+        // Crear una copia para no modificar la lista original que podría estar ordenada por nombre
+        List<Encuesta> copiaLista = new ArrayList<>(listaEncuestas);
+
+        // Ordenar la copia por ID para Binary Search
+        copiaLista.sort((e1, e2) -> Integer.compare(e1.getIdEncuesta(), e2.getIdEncuesta()));
+
+        int izquierda = 0;
+        int derecha = copiaLista.size() - 1;
+
+        while (izquierda <= derecha) {
+            int medio = izquierda + (derecha - izquierda) / 2;
+            Encuesta encuestaMedio = copiaLista.get(medio);
+
+            if (encuestaMedio.getIdEncuesta() == idEncuestaBuscada) {
+                return encuestaMedio; // Encuesta encontrada
+            }
+
+            if (encuestaMedio.getIdEncuesta() < idEncuestaBuscada) {
+                izquierda = medio + 1;
+            } else {
+                derecha = medio - 1;
+            }
+        }
+        return null; // Encuesta no encontrada
+    }
+
+    /**
+     * Busca una pregunta específica dentro de una encuesta por su número de orden.
+     * Utiliza una búsqueda secuencial en la lista de preguntas de la encuesta,
+     * la cual se asume ordenada por {@code ordenEnEncuesta} gracias al DAO.
+     *
+     * @param idEncuesta El ID de la encuesta en la que buscar.
+     * @param ordenBuscado El número de orden de la pregunta deseada.
+     * @return El objeto {@link EncuestaDetallePregunta} si se encuentra una pregunta con el orden especificado,
+     *         o {@code null} si la encuesta no tiene preguntas, no se encuentra la encuesta, o no existe
+     *         una pregunta con dicho orden.
+     */
+    public EncuestaDetallePregunta buscarPreguntaPorOrden(int idEncuesta, int ordenBuscado) {
+        List<EncuestaDetallePregunta> preguntas = obtenerPreguntasDeEncuesta(idEncuesta);
+
+        if (preguntas == null || preguntas.isEmpty()) {
+            System.out.println("ServicioEncuestas: No hay preguntas para la encuesta ID " + idEncuesta + " o la encuesta no existe.");
+            return null;
+        }
+
+        // Búsqueda Secuencial
+        for (EncuestaDetallePregunta edp : preguntas) {
+            if (edp.getOrdenEnEncuesta() == ordenBuscado) {
+                return edp; // Pregunta encontrada
+            }
+        }
+
+        System.out.println("ServicioEncuestas: No se encontró pregunta con orden " + ordenBuscado + " en la encuesta ID " + idEncuesta + ".");
+        return null; // Pregunta no encontrada con ese orden
     }
 }

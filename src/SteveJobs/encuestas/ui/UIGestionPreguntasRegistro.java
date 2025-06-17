@@ -1,12 +1,15 @@
 /*
-Autor: José Flores
-
-*/
-
+ * Autores del Módulo:
+ * - José Flores
+ *
+ * Responsabilidad Principal:
+ * - UI para gestión de preguntas de registro
+ */
 package SteveJobs.encuestas.ui;
 
 import SteveJobs.encuestas.modelo.PreguntaRegistro;
 import SteveJobs.encuestas.servicio.ServicioConfiguracionAdmin;
+import SteveJobs.encuestas.util.PilaNavegacion; // Importar PilaNavegacion
 import javax.swing.JOptionPane;
 import java.util.List;
 import java.util.Scanner;
@@ -55,6 +58,9 @@ public class UIGestionPreguntasRegistro {
                     eliminarPreguntaUI();
                     break;
                 case "Volver al Menú Administrador":
+                    if (!PilaNavegacion.instance.isEmpty()) {
+                        PilaNavegacion.instance.pop(); // Pop al volver
+                    }
                     salir = true;
                     break;
                 default:

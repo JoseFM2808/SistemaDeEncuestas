@@ -1,11 +1,14 @@
 /*
-Autor: Gian Fri
-
-*/
-
+ * Autores del Módulo:
+ * - Pablo Alegre
+ *
+ * Responsabilidad Principal:
+ * - Lógica de negocio para usuarios
+ */
 package SteveJobs.encuestas.servicio;
 
 import SteveJobs.encuestas.modelo.Usuario;
+// import SteveJobs.encuestas.modelo.Usuario; // Duplicate import removed
 import SteveJobs.encuestas.dao.UsuarioDAO;
 import java.time.LocalDate;
 // Timestamp no es necesario aquí si se maneja en DAO/DB para fecha_registro
@@ -32,7 +35,7 @@ public class ServicioUsuarios {
      * @param fecha_nacimiento La fecha de nacimiento del usuario. Puede ser {@code null}.
      * @param genero El género del usuario (e.g., "Masculino", "Femenino", "Otro"). Puede ser {@code null}.
      * @param distrito_residencia El distrito donde reside el usuario. Puede ser {@code null}.
-     * @param rol El rol asignado al nuevo usuario (e.g., "ENCUESTADO", "ADMINISTRADOR"). No debe ser {@code null}.
+     * @param rol El rol asignado al nuevo usuario (e.g., "Encuestado", "Administrador"). No debe ser {@code null}.
      * @return {@code true} si el usuario se registró exitosamente, {@code false} en caso contrario (p.ej., email o DNI ya existen, error de base de datos).
      */
     public boolean registrarNuevoUsuario(String dni, String nombres, String apellidos, String email, String clave,
