@@ -1,46 +1,43 @@
 /*
- * Módulo Responsable: Admin. de Encuestas
- * Autores: Alfredo Swidin
- * Versión: 2.0 (Reescritura)
- * Fecha: 15/06/2025
+ * Autores del Módulo:
+ * - Alfredo Swidin
+ * - Asistente de AED (Refactorización)
  *
- * Descripción del Archivo:
- * Clase POJO para representar la entidad 'Encuestas'.
+ * Responsabilidad Principal:
+ * - Representa la entidad Encuesta, alineada con el diccionario de datos final.
  */
 package SteveJobs.encuestas.modelo;
 
 import java.sql.Timestamp;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Encuesta {
-    private int id_encuesta;
+
+    // Atributos corregidos para coincidir con el Diccionario de Datos
+    private int idEncuesta;
     private String nombre;
     private String descripcion;
-    private Timestamp fecha_inicio;
-    private Timestamp fecha_fin;
-    private String perfil_requerido; // JSON como String
+    private Timestamp fechaInicio;
+    private Timestamp fechaFin;
+    private int publicoObjetivo;
+    private String perfilRequerido;
     private String estado;
+    private Timestamp fechaCreacion;
+    private int idAdminCreador;
+    private List<EncuestaDetallePregunta> preguntasAsociadas;
 
-    // Constructores
     public Encuesta() {
+        this.preguntasAsociadas = new ArrayList<>();
+    }
+    
+    // Getters y Setters corregidos
+    public int getIdEncuesta() {
+        return idEncuesta;
     }
 
-    public Encuesta(int id_encuesta, String nombre, String descripcion, Timestamp fecha_inicio, Timestamp fecha_fin, String perfil_requerido, String estado) {
-        this.id_encuesta = id_encuesta;
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.fecha_inicio = fecha_inicio;
-        this.fecha_fin = fecha_fin;
-        this.perfil_requerido = perfil_requerido;
-        this.estado = estado;
-    }
-
-    // Getters y Setters
-    public int getId_encuesta() {
-        return id_encuesta;
-    }
-
-    public void setId_encuesta(int id_encuesta) {
-        this.id_encuesta = id_encuesta;
+    public void setIdEncuesta(int idEncuesta) {
+        this.idEncuesta = idEncuesta;
     }
 
     public String getNombre() {
@@ -59,28 +56,36 @@ public class Encuesta {
         this.descripcion = descripcion;
     }
 
-    public Timestamp getFecha_inicio() {
-        return fecha_inicio;
+    public Timestamp getFechaInicio() {
+        return fechaInicio;
     }
 
-    public void setFecha_inicio(Timestamp fecha_inicio) {
-        this.fecha_inicio = fecha_inicio;
+    public void setFechaInicio(Timestamp fechaInicio) {
+        this.fechaInicio = fechaInicio;
     }
 
-    public Timestamp getFecha_fin() {
-        return fecha_fin;
+    public Timestamp getFechaFin() {
+        return fechaFin;
     }
 
-    public void setFecha_fin(Timestamp fecha_fin) {
-        this.fecha_fin = fecha_fin;
+    public void setFechaFin(Timestamp fechaFin) {
+        this.fechaFin = fechaFin;
     }
 
-    public String getPerfil_requerido() {
-        return perfil_requerido;
+    public int getPublicoObjetivo() {
+        return publicoObjetivo;
     }
 
-    public void setPerfil_requerido(String perfil_requerido) {
-        this.perfil_requerido = perfil_requerido;
+    public void setPublicoObjetivo(int publicoObjetivo) {
+        this.publicoObjetivo = publicoObjetivo;
+    }
+
+    public String getPerfilRequerido() {
+        return perfilRequerido;
+    }
+
+    public void setPerfilRequerido(String perfilRequerido) {
+        this.perfilRequerido = perfilRequerido;
     }
 
     public String getEstado() {
@@ -91,16 +96,27 @@ public class Encuesta {
         this.estado = estado;
     }
 
-    @Override
-    public String toString() {
-        return "Encuesta{" +
-                "id_encuesta=" + id_encuesta +
-                ", nombre='" + nombre + ''' +
-                ", descripcion='" + descripcion + ''' +
-                ", fecha_inicio=" + fecha_inicio +
-                ", fecha_fin=" + fecha_fin +
-                ", perfil_requerido='" + perfil_requerido + ''' +
-                ", estado='" + estado + ''' +
-                '}';
+    public Timestamp getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(Timestamp fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public int getIdAdminCreador() {
+        return idAdminCreador;
+    }
+
+    public void setIdAdminCreador(int idAdminCreador) {
+        this.idAdminCreador = idAdminCreador;
+    }
+
+    public List<EncuestaDetallePregunta> getPreguntasAsociadas() {
+        return preguntasAsociadas;
+    }
+
+    public void setPreguntasAsociadas(List<EncuestaDetallePregunta> preguntasAsociadas) {
+        this.preguntasAsociadas = preguntasAsociadas;
     }
 }

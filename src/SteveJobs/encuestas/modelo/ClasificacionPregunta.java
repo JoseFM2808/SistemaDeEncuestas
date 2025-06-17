@@ -5,6 +5,8 @@ public class ClasificacionPregunta {
     
     private int idClasificacion;
     private String nombreClasificacion;
+    private String descripcion;
+    private String estado;
 
     public ClasificacionPregunta() {
     }

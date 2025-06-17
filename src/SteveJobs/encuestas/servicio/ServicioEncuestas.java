@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Date;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 
 public class ServicioEncuestas {
@@ -43,28 +44,72 @@ public class ServicioEncuestas {
         this.clasificacionPreguntaDAO = new ClasificacionPreguntaDAO();
     }
 
-    public int registrarNuevaEncuesta(String nombre, String descripcion, Timestamp fechaInicio, Timestamp fechaFin, int publicoObjetivo, String definicionPerfil, int idAdmin) {
+    public int registrarNuevaEncuesta(String nombre, String descripcion, Timestamp fechaInicio, Timestamp fechaFin, int publicoObjetivo, String perfilRequerido, int idAdmin) {
+        // Validaciones de negocio
         if (nombre == null || nombre.trim().isEmpty()) {
             System.err.println("Servicio: El nombre de la encuesta es obligatorio.");
             return -1;
         }
-        if (fechaInicio == null || fechaFin == null) {
-            System.err.println("Servicio: Las fechas de inicio y fin son obligatorias.");
-            return -1;
-        }
         if (fechaFin.before(fechaInicio)) {
-            System.err.println("Servicio: La fecha de fin no puede ser anterior a la fecha de inicio.");
-            return -1;
-        }
-        if (publicoObjetivo < 0) {
-            System.err.println("Servicio: Público objetivo no puede ser negativo.");
+            System.err.println("Servicio: La fecha de fin no puede ser anterior a la de inicio.");
             return -1;
         }
 
-        Encuesta nuevaEncuesta = new Encuesta(nombre.trim(), descripcion, fechaInicio, fechaFin, publicoObjetivo, definicionPerfil, idAdmin);
+        Encuesta nuevaEncuesta = new Encuesta();
+        nuevaEncuesta.setNombre(nombre.trim());
+        nuevaEncuesta.setDescripcion(descripcion);
+        nuevaEncuesta.setFechaInicio(fechaInicio);
+        nuevaEncuesta.setFechaFin(fechaFin);
+        nuevaEncuesta.setPublicoObjetivo(publicoObjetivo);
+        nuevaEncuesta.setPerfilRequerido(perfilRequerido);
+        nuevaEncuesta.setIdAdminCreador(idAdmin);
         nuevaEncuesta.setEstado("Borrador");
-        nuevaEncuesta.setFechaCreacionEncuesta(new Timestamp(System.currentTimeMillis()));
+        nuevaEncuesta.setFechaCreacion(new Timestamp(System.currentTimeMillis()));
+        
         return encuestaDAO.crearEncuesta(nuevaEncuesta);
+    }
+    
+    public List<Encuesta> obtenerTodasLasEncuestasOrdenadasPorNombre() {
+        List<Encuesta> encuestas = encuestaDAO.obtenerTodasLasEncuestas();
+        if (encuestas == null || encuestas.size() <= 1) {
+            return encuestas;
+        }
+
+        // Algoritmo de Ordenamiento por Inserción
+        for (int i = 1; i < encuestas.size(); i++) {
+            Encuesta encuestaActual = encuestas.get(i);
+            String nombreActual = encuestaActual.getNombre() != null ? encuestaActual.getNombre() : "";
+            int j = i - 1;
+            while (j >= 0 && (encuestas.get(j).getNombre() != null ? encuestas.get(j).getNombre() : "").compareToIgnoreCase(nombreActual) > 0) {
+                encuestas.set(j + 1, encuestas.get(j));
+                j = j - 1;
+            }
+            encuestas.set(j + 1, encuestaActual);
+        }
+        return encuestas;
+    }
+    
+    public Encuesta buscarEncuestaEnListaPorId(List<Encuesta> listaEncuestas, int idBuscado) {
+        if (listaEncuestas == null || listaEncuestas.isEmpty()) return null;
+        
+        // Algoritmo de Búsqueda Binaria (requiere lista ordenada por el criterio de búsqueda)
+        // Creamos una copia y la ordenamos por ID para la búsqueda
+        List<Encuesta> copiaOrdenadaPorId = new ArrayList<>(listaEncuestas);
+        copiaOrdenadaPorId.sort(Comparator.comparingInt(Encuesta::getIdEncuesta));
+
+        int izq = 0, der = copiaOrdenadaPorId.size() - 1;
+        while (izq <= der) {
+            int med = izq + (der - izq) / 2;
+            if (copiaOrdenadaPorId.get(med).getIdEncuesta() == idBuscado) {
+                return copiaOrdenadaPorId.get(med);
+            }
+            if (copiaOrdenadaPorId.get(med).getIdEncuesta() < idBuscado) {
+                izq = med + 1;
+            } else {
+                der = med - 1;
+            }
+        }
+        return null; // No encontrado
     }
 
     private Timestamp convertirStringATimestamp(String fechaStr) {
@@ -92,126 +137,33 @@ public class ServicioEncuestas {
      *
      * @return Una lista de {@link Encuesta} ordenadas por nombre.
      */
-    public List<Encuesta> obtenerTodasLasEncuestas() {
-        List<Encuesta> encuestas = encuestaDAO.obtenerTodasLasEncuestas();
-        if (encuestas == null || encuestas.size() <= 1) {
-            return encuestas; // No necesita ordenación o ya está "ordenada"
-        }
-
-        // Implementación de Insertion Sort
-        for (int i = 1; i < encuestas.size(); i++) {
-            Encuesta encuestaActual = encuestas.get(i);
-            String nombreActual = encuestaActual.getNombreEncuesta() != null ? encuestaActual.getNombreEncuesta() : "";
-            int j = i - 1;
-
-            // Mover elementos de encuestas[0..i-1] que son mayores que nombreActual
-            // a una posición adelante de su posición actual
-            while (j >= 0) {
-                String nombreJ = encuestas.get(j).getNombreEncuesta() != null ? encuestas.get(j).getNombreEncuesta() : "";
-                if (nombreJ.compareToIgnoreCase(nombreActual) > 0) {
-                    encuestas.set(j + 1, encuestas.get(j));
-                    j = j - 1;
-                } else {
-                    break; // El elemento actual ya está en su posición correcta relativa a los anteriores
-                }
-            }
-            encuestas.set(j + 1, encuestaActual);
-        }
-        return encuestas;
-    }
-
-
     public boolean modificarMetadatosEncuesta(int idEncuesta, String nuevoNombre, String nuevaDescripcion, Timestamp nuevaFechaInicio, Timestamp nuevaFechaFin, int nuevoPublicoObj, String nuevoPerfilDef) {
         Encuesta encuesta = encuestaDAO.obtenerEncuestaPorId(idEncuesta);
         if (encuesta == null) {
-            System.err.println("Servicio: Encuesta con ID " + idEncuesta + " no encontrada para modificar.");
             return false;
         }
+        encuesta.setNombre(nuevoNombre);
+        encuesta.setDescripcion(nuevaDescripcion);
+        encuesta.setFechaInicio(nuevaFechaInicio);
+        encuesta.setFechaFin(nuevaFechaFin);
+        encuesta.setPublicoObjetivo(nuevoPublicoObj);
+        encuesta.setPerfilRequerido(nuevoPerfilDef);
 
-        boolean modificado = false;
-
-        if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
-            if (!nuevoNombre.trim().equals(encuesta.getNombreEncuesta())) {
-                encuesta.setNombreEncuesta(nuevoNombre.trim());
-                modificado = true;
-            }
-        }
-        if (nuevaDescripcion != null) {
-            if (!nuevaDescripcion.equals(encuesta.getDescripcion())) {
-                encuesta.setDescripcion(nuevaDescripcion);
-                modificado = true;
-            }
-        }
-
-        if (nuevaFechaInicio != null) {
-            if (!nuevaFechaInicio.equals(encuesta.getFechaInicioVigencia())) {
-                encuesta.setFechaInicioVigencia(nuevaFechaInicio);
-                modificado = true;
-            }
-        }
-        if (nuevaFechaFin != null) {
-            if (!nuevaFechaFin.equals(encuesta.getFechaFinVigencia())) {
-                encuesta.setFechaFinVigencia(nuevaFechaFin);
-                modificado = true;
-            }
-        }
-
-        if (encuesta.getFechaInicioVigencia() == null || encuesta.getFechaFinVigencia() == null) {
-             System.err.println("Servicio: Las fechas de inicio y fin no pueden ser nulas después de la modificación si se intentó establecer una.");
-             return false;
-        }
-        
-        if (encuesta.getFechaFinVigencia().before(encuesta.getFechaInicioVigencia())) {
-            System.err.println("Servicio: La fecha de fin no puede ser anterior a la fecha de inicio.");
-            return false;
-        }
-
-        if (nuevoPublicoObj >= 0) {
-            if (nuevoPublicoObj != encuesta.getPublicoObjetivoCantidad()) {
-                encuesta.setPublicoObjetivoCantidad(nuevoPublicoObj);
-                modificado = true;
-            }
-        } else {
-             System.err.println("Servicio: Público objetivo debe ser un número no negativo.");
-             return false;
-        }
-        
-        if (nuevoPerfilDef != null) {
-            if(!nuevoPerfilDef.equals(encuesta.getDefinicionPerfil())) {
-                encuesta.setDefinicionPerfil(nuevoPerfilDef);
-                modificado = true;
-            }
-        }
-        
-        if (modificado) {
-            return encuestaDAO.actualizarEncuesta(encuesta);
-        }
-        return true; 
+        return encuestaDAO.actualizarEncuesta(encuesta);
     }
 
     public boolean cambiarEstadoEncuesta(int idEncuesta, String nuevoEstado) {
         Encuesta encuesta = encuestaDAO.obtenerEncuestaPorId(idEncuesta);
         if (encuesta == null) {
-            System.err.println("Servicio: Encuesta con ID " + idEncuesta + " no encontrada.");
             return false;
         }
-
+        // Regla de negocio: para activar, debe tener 12 preguntas.
         if ("Activa".equalsIgnoreCase(nuevoEstado)) {
             if (encuestaDetalleDAO.contarPreguntasEnEncuesta(idEncuesta) != 12) {
-                System.err.println("Servicio: No se puede activar. La encuesta debe tener exactamente 12 preguntas asociadas.");
-                return false;
-            }
-            if (encuesta.getDefinicionPerfil() == null || encuesta.getDefinicionPerfil().trim().isEmpty()){
-                 System.err.println("Servicio: No se puede activar. La encuesta debe tener un perfil definido.");
-                return false;
-            }
-            if (encuesta.getFechaFinVigencia().before(new Timestamp(System.currentTimeMillis()))){
-                System.err.println("Servicio: No se puede activar. La fecha de fin de la encuesta ya pasó.");
+                System.err.println("Servicio: No se puede activar. La encuesta debe tener exactamente 12 preguntas.");
                 return false;
             }
         }
-
-        encuesta.setEstado(nuevoEstado);
         return encuestaDAO.actualizarEstadoEncuesta(idEncuesta, nuevoEstado);
     }
 
@@ -321,45 +273,32 @@ public class ServicioEncuestas {
     }
 
     public Encuesta copiarEncuesta(int idEncuestaOriginal, int idAdminCopia) {
-        Encuesta original = obtenerDetallesCompletosEncuesta(idEncuestaOriginal);
-        if (original == null) {
-            System.err.println("Servicio: Encuesta original con ID " + idEncuestaOriginal + " no encontrada para copiar.");
-            return null;
-        }
+        Encuesta original = encuestaDAO.obtenerEncuestaPorId(idEncuestaOriginal);
+        if (original == null) return null;
 
-        Encuesta copia = new Encuesta(
-            "Copia de " + original.getNombreEncuesta(),
-            original.getDescripcion(),
-            original.getFechaInicioVigencia(),
-            original.getFechaFinVigencia(),
-            original.getPublicoObjetivoCantidad(),
-            original.getDefinicionPerfil(),
-            idAdminCopia
-        );
+        Encuesta copia = new Encuesta();
+        // Usando los getters y setters corregidos para crear la copia
+        copia.setNombre("Copia de " + original.getNombre());
+        copia.setDescripcion(original.getDescripcion());
+        copia.setFechaInicio(original.getFechaInicio());
+        copia.setFechaFin(original.getFechaFin());
+        copia.setPublicoObjetivo(original.getPublicoObjetivo());
+        copia.setPerfilRequerido(original.getPerfilRequerido());
+        copia.setIdAdminCreador(idAdminCopia);
         copia.setEstado("Borrador");
-
+        copia.setFechaCreacion(new Timestamp(System.currentTimeMillis()));
+        
         int idNuevaEncuesta = encuestaDAO.crearEncuesta(copia);
         if (idNuevaEncuesta != -1) {
             copia.setIdEncuesta(idNuevaEncuesta);
-            if (original.getPreguntasAsociadas() != null) {
-                for (EncuestaDetallePregunta detalleOriginal : original.getPreguntasAsociadas()) {
-                    EncuestaDetallePregunta detalleCopia = new EncuestaDetallePregunta();
-                    detalleCopia.setIdEncuesta(idNuevaEncuesta);
-                    detalleCopia.setIdPreguntaBanco(detalleOriginal.getIdPreguntaBanco());
-                    detalleCopia.setTextoPreguntaUnica(detalleOriginal.getTextoPreguntaUnica());
-                    detalleCopia.setIdTipoPreguntaUnica(detalleOriginal.getIdTipoPreguntaUnica());
-                    detalleCopia.setIdClasificacionUnica(detalleOriginal.getIdClasificacionUnica());
-                    detalleCopia.setOrdenEnEncuesta(detalleOriginal.getOrdenEnEncuesta());
-                    detalleCopia.setEsPreguntaDescarte(detalleOriginal.isEsPreguntaDescarte());
-                    detalleCopia.setCriterioDescarteValor(detalleOriginal.getCriterioDescarteValor());
-
-                    encuestaDetalleDAO.agregarPreguntaAEncuesta(detalleCopia);
-                }
+            // Lógica para copiar preguntas asociadas (asume que el DAO funciona)
+            List<EncuestaDetallePregunta> detallesOriginales = encuestaDetalleDAO.obtenerPreguntasPorEncuesta(idEncuestaOriginal);
+            for(EncuestaDetallePregunta detalle : detallesOriginales) {
+                detalle.setIdEncuesta(idNuevaEncuesta); // Apuntar al nuevo ID de encuesta
+                detalle.setIdEncuestaDetalle(0); // Resetear el ID del detalle para que se genere uno nuevo
+                encuestaDetalleDAO.agregarPreguntaAEncuesta(detalle);
             }
-            System.out.println("Servicio: Encuesta ID " + idEncuestaOriginal + " copiada a nueva encuesta ID " + idNuevaEncuesta);
             return copia;
-        } else {
-            System.err.println("Servicio: Error al crear la entrada principal para la encuesta copiada.");
         }
         return null;
     }
@@ -397,47 +336,6 @@ public class ServicioEncuestas {
             encuesta.setPreguntasAsociadas(preguntas);
         }
         return encuesta;
-    }
-
-    /**
-     * Busca una encuesta específica por su ID dentro de una lista de encuestas dada,
-     * utilizando el algoritmo de Binary Search.
-     * La lista proporcionada se copia y se ordena por ID antes de la búsqueda para
-     * asegurar el pre-requisito de Binary Search sin modificar la lista original.
-     *
-     * @param listaEncuestas La lista de encuestas en la que buscar.
-     * @param idEncuestaBuscada El ID de la encuesta a encontrar.
-     * @return La {@link Encuesta} encontrada, o {@code null} si no se encuentra en la lista.
-     */
-    public Encuesta buscarEncuestaEnListaPorId(List<Encuesta> listaEncuestas, int idEncuestaBuscada) {
-        if (listaEncuestas == null || listaEncuestas.isEmpty()) {
-            return null;
-        }
-
-        // Crear una copia para no modificar la lista original que podría estar ordenada por nombre
-        List<Encuesta> copiaLista = new ArrayList<>(listaEncuestas);
-
-        // Ordenar la copia por ID para Binary Search
-        copiaLista.sort((e1, e2) -> Integer.compare(e1.getIdEncuesta(), e2.getIdEncuesta()));
-
-        int izquierda = 0;
-        int derecha = copiaLista.size() - 1;
-
-        while (izquierda <= derecha) {
-            int medio = izquierda + (derecha - izquierda) / 2;
-            Encuesta encuestaMedio = copiaLista.get(medio);
-
-            if (encuestaMedio.getIdEncuesta() == idEncuestaBuscada) {
-                return encuestaMedio; // Encuesta encontrada
-            }
-
-            if (encuestaMedio.getIdEncuesta() < idEncuestaBuscada) {
-                izquierda = medio + 1;
-            } else {
-                derecha = medio - 1;
-            }
-        }
-        return null; // Encuesta no encontrada
     }
 
     /**

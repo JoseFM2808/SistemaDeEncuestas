@@ -1,238 +1,151 @@
 /*
  * Autores del Módulo:
  * - Alfredo Swidin
+ * - Asistente de AED (Refactorización)
  *
  * Responsabilidad Principal:
- * - Acceso a datos de encuestas
+ * - Acceso a datos para la entidad Encuesta, alineado con el modelo y diccionario finales.
  */
 package SteveJobs.encuestas.dao;
 
 import SteveJobs.encuestas.modelo.Encuesta;
 import SteveJobs.encuestas.conexion.ConexionDB;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EncuestaDAO {
 
-    /**
-     * Crea una nueva encuesta en la base de datos.
-     * @param encuesta La encuesta a crear.
-     * @return El ID de la encuesta creada, o -1 si falla.
-     */
     public int crearEncuesta(Encuesta encuesta) {
-        String sql = "INSERT INTO Encuestas (nombre, descripcion, fecha_inicio, fecha_fin, perfil_requerido, estado) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO encuestas (nombre, descripcion, fecha_inicio, fecha_fin, publico_objetivo, perfil_requerido, estado, fecha_creacion, id_admin_creador) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Connection con = null;
         PreparedStatement ps = null;
-        int generatedId = -1;
+        ResultSet generatedKeys = null;
+        int idGenerado = -1;
 
         try {
             con = ConexionDB.conectar();
-            if (con == null) return -1;
-            ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+            ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, encuesta.getNombre());
             ps.setString(2, encuesta.getDescripcion());
-            ps.setTimestamp(3, encuesta.getFecha_inicio());
-            ps.setTimestamp(4, encuesta.getFecha_fin());
-            ps.setString(5, encuesta.getPerfil_requerido()); // JSON como String
-            ps.setString(6, encuesta.getEstado());
+            ps.setTimestamp(3, encuesta.getFechaInicio());
+            ps.setTimestamp(4, encuesta.getFechaFin());
+            ps.setInt(5, encuesta.getPublicoObjetivo());
+            ps.setString(6, encuesta.getPerfilRequerido());
+            ps.setString(7, encuesta.getEstado());
+            ps.setTimestamp(8, encuesta.getFechaCreacion());
+            ps.setInt(9, encuesta.getIdAdminCreador());
 
-            int filasAfectadas = ps.executeUpdate();
-            if (filasAfectadas > 0) {
-                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        generatedId = generatedKeys.getInt(1);
-                        encuesta.setId_encuesta(generatedId);
-                    }
+            if (ps.executeUpdate() > 0) {
+                generatedKeys = ps.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    idGenerado = generatedKeys.getInt(1);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("EncuestaDAO: Error SQL al crear encuesta: " + e.getMessage());
+            System.err.println("DAO Error al crear encuesta: " + e.getMessage());
         } finally {
-            ConexionDB.cerrar(ps);
-            ConexionDB.cerrar(con);
+            ConexionDB.cerrar(generatedKeys, ps, con);
         }
-        return generatedId;
+        return idGenerado;
     }
-
-    /**
-     * Obtiene una encuesta por su ID.
-     * @param idEncuesta El ID de la encuesta.
-     * @return La encuesta si se encuentra, null en caso contrario.
-     */
+    
     public Encuesta obtenerEncuestaPorId(int idEncuesta) {
-        String sql = "SELECT id_encuesta, nombre, descripcion, fecha_inicio, fecha_fin, perfil_requerido, estado FROM Encuestas WHERE id_encuesta = ?";
+        String sql = "SELECT * FROM encuestas WHERE id_encuesta = ?";
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         Encuesta encuesta = null;
-
         try {
             con = ConexionDB.conectar();
-            if (con == null) return null;
             ps = con.prepareStatement(sql);
             ps.setInt(1, idEncuesta);
             rs = ps.executeQuery();
-
             if (rs.next()) {
-                encuesta = mapearResultSetAEncuesta(rs);
+                encuesta = new Encuesta();
+                encuesta.setIdEncuesta(rs.getInt("id_encuesta"));
+                encuesta.setNombre(rs.getString("nombre"));
+                encuesta.setDescripcion(rs.getString("descripcion"));
+                encuesta.setFechaInicio(rs.getTimestamp("fecha_inicio"));
+                encuesta.setFechaFin(rs.getTimestamp("fecha_fin"));
+                encuesta.setPublicoObjetivo(rs.getInt("publico_objetivo"));
+                encuesta.setPerfilRequerido(rs.getString("perfil_requerido"));
+                encuesta.setEstado(rs.getString("estado"));
+                encuesta.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
+                encuesta.setIdAdminCreador(rs.getInt("id_admin_creador"));
             }
         } catch (SQLException e) {
-            System.err.println("EncuestaDAO: Error SQL al obtener encuesta por ID: " + e.getMessage());
+            System.err.println("DAO Error al obtener encuesta por ID: " + e.getMessage());
         } finally {
-            ConexionDB.cerrar(rs);
-            ConexionDB.cerrar(ps);
-            ConexionDB.cerrar(con);
+            ConexionDB.cerrar(rs, ps, con);
         }
         return encuesta;
     }
 
-    /**
-     * Actualiza una encuesta existente.
-     * @param encuesta La encuesta con los datos actualizados.
-     * @return true si la actualización fue exitosa, false en caso contrario.
-     */
-    public boolean actualizarEncuesta(Encuesta encuesta) {
-        String sql = "UPDATE Encuestas SET nombre = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, perfil_requerido = ?, estado = ? WHERE id_encuesta = ?";
-        Connection con = null;
-        PreparedStatement ps = null;
-        boolean actualizada = false;
-
-        try {
-            con = ConexionDB.conectar();
-            if (con == null) return false;
-            ps = con.prepareStatement(sql);
-            ps.setString(1, encuesta.getNombre());
-            ps.setString(2, encuesta.getDescripcion());
-            ps.setTimestamp(3, encuesta.getFecha_inicio());
-            ps.setTimestamp(4, encuesta.getFecha_fin());
-            ps.setString(5, encuesta.getPerfil_requerido());
-            ps.setString(6, encuesta.getEstado());
-            ps.setInt(7, encuesta.getId_encuesta());
-
-            int filasAfectadas = ps.executeUpdate();
-            if (filasAfectadas > 0) {
-                actualizada = true;
-            }
-        } catch (SQLException e) {
-            System.err.println("EncuestaDAO: Error SQL al actualizar encuesta: " + e.getMessage());
-        } finally {
-            ConexionDB.cerrar(ps);
-            ConexionDB.cerrar(con);
-        }
-        return actualizada;
-    }
-
-    /**
-     * Elimina una encuesta.
-     * @param idEncuesta El ID de la encuesta a eliminar.
-     * @return true si la eliminación fue exitosa, false en caso contrario.
-     */
-    public boolean eliminarEncuesta(int idEncuesta) {
-        // Antes de eliminar, se deberían eliminar las referencias en Encuesta_Preguntas y Respuestas.
-        // Esto puede hacerse en la capa de servicio o con cascadas en BD.
-        // Aquí solo se elimina la encuesta principal.
-        String sql = "DELETE FROM Encuestas WHERE id_encuesta = ?";
-        Connection con = null;
-        PreparedStatement ps = null;
-        boolean eliminada = false;
-
-        try {
-            con = ConexionDB.conectar();
-            if (con == null) return false;
-            ps = con.prepareStatement(sql);
-            ps.setInt(1, idEncuesta);
-
-            int filasAfectadas = ps.executeUpdate();
-            if (filasAfectadas > 0) {
-                eliminada = true;
-            }
-        } catch (SQLException e) {
-            System.err.println("EncuestaDAO: Error SQL al eliminar encuesta: " + e.getMessage());
-        } finally {
-            ConexionDB.cerrar(ps);
-            ConexionDB.cerrar(con);
-        }
-        return eliminada;
-    }
-
-    /**
-     * Obtiene todas las encuestas.
-     * @return Una lista de todas las encuestas.
-     */
     public List<Encuesta> obtenerTodasLasEncuestas() {
-        String sql = "SELECT id_encuesta, nombre, descripcion, fecha_inicio, fecha_fin, perfil_requerido, estado FROM Encuestas";
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        List<Encuesta> encuestas = new ArrayList<>();
-
-        try {
-            con = ConexionDB.conectar();
-            if (con == null) return encuestas;
-            ps = con.prepareStatement(sql);
-            rs = ps.executeQuery();
+        List<Encuesta> lista = new ArrayList<>();
+        String sql = "SELECT * FROM encuestas ORDER BY fecha_creacion DESC";
+        try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                encuestas.add(mapearResultSetAEncuesta(rs));
+                Encuesta encuesta = new Encuesta();
+                encuesta.setIdEncuesta(rs.getInt("id_encuesta"));
+                encuesta.setNombre(rs.getString("nombre"));
+                encuesta.setDescripcion(rs.getString("descripcion"));
+                encuesta.setEstado(rs.getString("estado"));
+                encuesta.setFechaInicio(rs.getTimestamp("fecha_inicio"));
+                encuesta.setFechaFin(rs.getTimestamp("fecha_fin"));
+                lista.add(encuesta);
             }
         } catch (SQLException e) {
-            System.err.println("EncuestaDAO: Error SQL al obtener todas las encuestas: " + e.getMessage());
-        } finally {
-            ConexionDB.cerrar(rs);
-            ConexionDB.cerrar(ps);
-            ConexionDB.cerrar(con);
+            System.err.println("DAO Error al obtener todas las encuestas: " + e.getMessage());
         }
-        return encuestas;
+        return lista;
     }
     
-    /**
-     * Obtiene todas las encuestas por un estado específico.
-     * @param estado El estado de las encuestas a filtrar.
-     * @return Una lista de encuestas que coinciden con el estado.
-     */
-    public List<Encuesta> obtenerEncuestasPorEstado(String estado) {
-        String sql = "SELECT id_encuesta, nombre, descripcion, fecha_inicio, fecha_fin, perfil_requerido, estado FROM Encuestas WHERE estado = ?";
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        List<Encuesta> encuestas = new ArrayList<>();
-
-        try {
-            con = ConexionDB.conectar();
-            if (con == null) return encuestas;
-            ps = con.prepareStatement(sql);
-            ps.setString(1, estado);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                encuestas.add(mapearResultSetAEncuesta(rs));
-            }
+    public boolean actualizarEncuesta(Encuesta encuesta) {
+        String sql = "UPDATE encuestas SET nombre = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, publico_objetivo = ?, perfil_requerido = ?, estado = ? WHERE id_encuesta = ?";
+        try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, encuesta.getNombre());
+            ps.setString(2, encuesta.getDescripcion());
+            ps.setTimestamp(3, encuesta.getFechaInicio());
+            ps.setTimestamp(4, encuesta.getFechaFin());
+            ps.setInt(5, encuesta.getPublicoObjetivo());
+            ps.setString(6, encuesta.getPerfilRequerido());
+            ps.setString(7, encuesta.getEstado());
+            ps.setInt(8, encuesta.getIdEncuesta());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("EncuestaDAO: Error SQL al obtener encuestas por estado '" + estado + "': " + e.getMessage());
-        } finally {
-            ConexionDB.cerrar(rs);
-            ConexionDB.cerrar(ps);
-            ConexionDB.cerrar(con);
+            System.err.println("DAO Error al actualizar encuesta: " + e.getMessage());
+            return false;
         }
-        return encuestas;
     }
-
-
-    private Encuesta mapearResultSetAEncuesta(ResultSet rs) throws SQLException {
-        Encuesta encuesta = new Encuesta();
-        encuesta.setId_encuesta(rs.getInt("id_encuesta"));
-        encuesta.setNombre(rs.getString("nombre"));
-        encuesta.setDescripcion(rs.getString("descripcion"));
-        encuesta.setFecha_inicio(rs.getTimestamp("fecha_inicio"));
-        encuesta.setFecha_fin(rs.getTimestamp("fecha_fin"));
-        encuesta.setPerfil_requerido(rs.getString("perfil_requerido"));
-        encuesta.setEstado(rs.getString("estado"));
-        return encuesta;
+    
+    public boolean actualizarEstadoEncuesta(int idEncuesta, String nuevoEstado) {
+         String sql = "UPDATE encuestas SET estado = ? WHERE id_encuesta = ?";
+         try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstado);
+            ps.setInt(2, idEncuesta);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("DAO Error al actualizar estado de encuesta: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public boolean eliminarEncuesta(int idEncuesta) {
+        String sql = "DELETE FROM encuestas WHERE id_encuesta = ?";
+        try (Connection con = ConexionDB.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idEncuesta);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("DAO Error al eliminar encuesta: " + e.getMessage());
+            return false;
+        }
     }
 }

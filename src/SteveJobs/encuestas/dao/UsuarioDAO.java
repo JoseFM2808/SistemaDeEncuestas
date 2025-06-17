@@ -359,4 +359,44 @@ public class UsuarioDAO {
         return usuario;
     }
     // --- FIN DE MÉTODOS AUXILIARES ---
+    
+    public Usuario validarUsuario(String email, String clave) {
+        // Usamos la misma consulta que obtenerUsuarioPorEmail pero añadiendo la clave
+        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro, rol FROM Usuarios WHERE email = ? AND clave = ?";
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        Usuario usuario = null;
+
+        try {
+            con = ConexionDB.conectar();
+            if (con == null) {
+                 System.err.println("UsuarioDAO: No se pudo conectar a la BD para validar.");
+                 return null;
+            }
+            
+            ps = con.prepareStatement(sql);
+            ps.setString(1, email);
+            ps.setString(2, clave);
+
+            rs = ps.executeQuery();
+
+            // Si se encuentra una fila, las credenciales son correctas
+            if (rs.next()) {
+                // Reutilizamos el método que ya tienes para no repetir código
+                usuario = mapearResultSetAUsuario(rs); 
+                System.out.println("UsuarioDAO: Credenciales validadas para el usuario: " + email);
+            } else {
+                System.out.println("UsuarioDAO: Credenciales incorrectas para el usuario: " + email);
+            }
+        } catch (SQLException e) {
+            System.err.println("UsuarioDAO: Error SQL al validar usuario: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            ConexionDB.cerrar(rs);
+            ConexionDB.cerrar(ps);
+            ConexionDB.cerrar(con);
+        }
+        return usuario;
+    }
 }

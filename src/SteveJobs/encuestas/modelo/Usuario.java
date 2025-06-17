@@ -136,15 +136,15 @@ public class Usuario {
     public String toString() {
         return "Usuario{" +
                 "id_usuario=" + id_usuario +
-                ", dni='" + dni + ''' +
-                ", nombres='" + nombres + ''' +
-                ", apellidos='" + apellidos + ''' +
-                ", email='" + email + ''' +
+                ", dni='" + dni + ' ' +
+                ", nombres='" + nombres + ' ' +
+                ", apellidos='" + apellidos + ' ' +
+                ", email='" + email + ' ' +
                 // No incluir clave en toString por seguridad
-                ", rol='" + rol + ''' + // Incluir rol en toString
+                ", rol='" + rol + ' ' + // Incluir rol en toString
                 ", fecha_nacimiento=" + fecha_nacimiento +
-                ", genero='" + genero + ''' +
-                ", distrito_residencia='" + distrito_residencia + ''' +
+                ", genero='" + genero + ' ' +
+                ", distrito_residencia='" + distrito_residencia + ' ' +
                 ", fecha_registro=" + fecha_registro +
                 '}';
     }
