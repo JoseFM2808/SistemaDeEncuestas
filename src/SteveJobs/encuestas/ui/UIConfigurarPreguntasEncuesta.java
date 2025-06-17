@@ -40,7 +40,7 @@ public class UIConfigurarPreguntasEncuesta {
 
         boolean salir = false;
         while (!salir) {
-            String tituloMenu = "Configurar Preguntas para Encuesta: " + encuesta.getNombreEncuesta() + " (ID: " + idEncuesta + ")";
+            String tituloMenu = "Configurar Preguntas para Encuesta: " + encuesta.getNombre()+ " (ID: " + idEncuesta + ")";
             String[] opciones = {
                     "Asociar Pregunta del Banco",
                     "Agregar Pregunta Nueva (Única para esta encuesta)",
@@ -96,20 +96,24 @@ public class UIConfigurarPreguntasEncuesta {
     }
 
     private static void asociarPreguntaBancoUI() {
-        List<PreguntaBanco> preguntasBanco = servicioPreguntas.listarPreguntasDelBancoConFiltro(null, null);
+        // --- AQUÍ ESTÁ LA CORRECCIÓN ---
+        // Se llama al método sin parámetros, como debe ser.
+        List<PreguntaBanco> preguntasBanco = servicioPreguntas.obtenerTodasLasPreguntasDelBanco();
+        
         if (preguntasBanco == null || preguntasBanco.isEmpty()) {
             JOptionPane.showMessageDialog(null, "No hay preguntas en el banco para asociar.", "Banco Vacío", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
+        // El resto de la lógica para mostrar y asociar la pregunta ya era correcta.
         List<String> opcionesPreguntas = new ArrayList<>();
         for (PreguntaBanco pb : preguntasBanco) {
-            opcionesPreguntas.add(pb.getIdPreguntaBanco() + ": " + pb.getTextoPregunta().substring(0, Math.min(pb.getTextoPregunta().length(), 50)) + "...");
+            opcionesPreguntas.add(pb.getIdPreguntaBanco() + ": " + pb.getTextoPregunta());
         }
 
         String seleccionPreguntaStr = (String) JOptionPane.showInputDialog(null, "Seleccione la pregunta del banco a asociar:",
                 "Asociar Pregunta del Banco", JOptionPane.QUESTION_MESSAGE, null, opcionesPreguntas.toArray(),
-                opcionesPreguntas.isEmpty() ? null : opcionesPreguntas.get(0));
+                opcionesPreguntas.get(0));
 
         if (seleccionPreguntaStr == null) return;
 
@@ -117,13 +121,9 @@ public class UIConfigurarPreguntasEncuesta {
 
         String ordenStr = JOptionPane.showInputDialog(null, "Orden de la pregunta en la encuesta (1-12):", "Orden de Pregunta", JOptionPane.PLAIN_MESSAGE);
         if (ordenStr == null || ordenStr.trim().isEmpty()) return;
-        int orden;
+        int orden = 0;
         try {
             orden = Integer.parseInt(ordenStr.trim());
-            if (orden < 1 || orden > 12) {
-                JOptionPane.showMessageDialog(null, "El orden debe ser un número entre 1 y 12.", "Error de Orden", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(null, "Orden debe ser un número.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
             return;
@@ -131,18 +131,15 @@ public class UIConfigurarPreguntasEncuesta {
 
         int esDescarteOption = JOptionPane.showConfirmDialog(null, "¿Marcar esta pregunta como de descarte?", "Pregunta de Descarte", JOptionPane.YES_NO_OPTION);
         boolean esDescarte = (esDescarteOption == JOptionPane.YES_OPTION);
-        String criterioDescarte = null;
+        String criterioDescarte = "";
         if (esDescarte) {
-            criterioDescarte = JOptionPane.showInputDialog(null, "Ingrese el criterio de descarte (valor de respuesta que descarta):", "Criterio de Descarte", JOptionPane.PLAIN_MESSAGE);
-            if (criterioDescarte == null) {
-                criterioDescarte = "";
-            }
+            criterioDescarte = JOptionPane.showInputDialog(null, "Ingrese el criterio de descarte:", "Criterio de Descarte", JOptionPane.PLAIN_MESSAGE);
         }
 
         if (servicioEncuestas.asociarPreguntaDelBancoAEncuesta(idEncuestaActual, idPreguntaBancoSeleccionada, orden, esDescarte, criterioDescarte)) {
             JOptionPane.showMessageDialog(null, "Pregunta del banco asociada exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(null, "Error al asociar la pregunta. Verifique si la encuesta ya tiene 12 preguntas, si la pregunta ya está asociada o si el ID de la pregunta del banco es válido.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error al asociar la pregunta.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
