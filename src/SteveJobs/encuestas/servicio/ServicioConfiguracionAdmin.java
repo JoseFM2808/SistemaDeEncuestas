@@ -1,7 +1,10 @@
 /*
-Autor: José Flores
-
-*/
+ * Autores del Módulo:
+ * - José Flores
+ *
+ * Responsabilidad Principal:
+ * - Lógica de configuración general de administrador
+ */
 package SteveJobs.encuestas.servicio;
 
 import SteveJobs.encuestas.dao.PreguntaRegistroDAO;

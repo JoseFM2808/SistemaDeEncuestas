@@ -1,10 +1,15 @@
 /*
-Autor: Alfredo Swidin
+ * Autores del Módulo:
+ * - Alfredo Swidin
+ *
+ * Responsabilidad Principal:
+ * - UI para configuración de preguntas de encuesta
  */
 package SteveJobs.encuestas.ui;
 
 import SteveJobs.encuestas.modelo.Encuesta;
 import SteveJobs.encuestas.modelo.EncuestaDetallePregunta;
+import SteveJobs.encuestas.util.PilaNavegacion; // Importar PilaNavegacion
 import SteveJobs.encuestas.modelo.PreguntaBanco;
 import SteveJobs.encuestas.servicio.ServicioEncuestas;
 import SteveJobs.encuestas.servicio.ServicioPreguntas;
@@ -55,6 +60,9 @@ public class UIConfigurarPreguntasEncuesta {
             );
 
             if (seleccion == null || seleccion.equals(opciones[5])) {
+                if (!PilaNavegacion.instance.isEmpty()) {
+                    PilaNavegacion.instance.pop(); // Pop al volver
+                }
                 salir = true;
                 continue;
             }

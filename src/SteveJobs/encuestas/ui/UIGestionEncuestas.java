@@ -1,11 +1,16 @@
 /*
-Autor: Alfredo Swidin
+ * Autores del Módulo:
+ * - Alfredo Swidin
+ *
+ * Responsabilidad Principal:
+ * - UI para gestión de encuestas
  */
 package SteveJobs.encuestas.ui;
 
 import SteveJobs.encuestas.modelo.Encuesta;
 import SteveJobs.encuestas.modelo.Usuario;
 import SteveJobs.encuestas.servicio.ServicioEncuestas;
+import SteveJobs.encuestas.util.PilaNavegacion; // Importar PilaNavegacion
 
 import javax.swing.JOptionPane;
 import java.sql.Timestamp;
@@ -32,6 +37,7 @@ public class UIGestionEncuestas {
                     "Cambiar Estado de Encuesta",
                     "Copiar Encuesta",
                     "Eliminar Encuesta",
+                    "Buscar Encuesta por ID", // Nueva opción
                     "Volver al Menú Principal"
             };
             String seleccion = (String) JOptionPane.showInputDialog(
@@ -44,7 +50,10 @@ public class UIGestionEncuestas {
                     opciones[0]
             );
 
-            if (seleccion == null || seleccion.equals(opciones[7])) {
+            if (seleccion == null || seleccion.equals(opciones[8])) { // Ajustar índice de salida
+                if (!PilaNavegacion.instance.isEmpty()) {
+                    PilaNavegacion.instance.pop(); // Pop al volver
+                }
                 salir = true;
                 continue;
             }
@@ -71,6 +80,9 @@ public class UIGestionEncuestas {
                         break;
                     case "Eliminar Encuesta":
                         eliminarEncuestaUI();
+                        break;
+                    case "Buscar Encuesta por ID": // Nuevo case
+                        buscarEncuestaPorIdUI();
                         break;
                     default:
                         JOptionPane.showMessageDialog(null, "Opción no válida.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -130,7 +142,7 @@ public class UIGestionEncuestas {
         String definicionPerfil = JOptionPane.showInputDialog(null, "Definición del perfil del encuestado (ej. Criterios en texto o JSON):", "Crear Encuesta", JOptionPane.PLAIN_MESSAGE);
 
 
-        int idAdmin = (adminLogueado != null) ? adminLogueado.getId_usuario() : 0; // Corregido getIdUsuario a getId_usuario
+        int idAdmin = (adminLogueado != null) ? adminLogueado.getIdUsuario() : 0;
 
         int idNuevaEncuesta = servicioEncuestas.registrarNuevaEncuesta(nombre, descripcion, fechaInicio, fechaFin, publicoObjetivo, definicionPerfil, idAdmin);
 
@@ -280,6 +292,50 @@ public class UIGestionEncuestas {
             } else {
                 JOptionPane.showMessageDialog(null, "Error al eliminar la encuesta. Podría tener datos asociados que impiden su borrado directo.", "Error", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    private static void buscarEncuestaPorIdUI() {
+        String idStr = JOptionPane.showInputDialog(null, "Ingrese el ID de la encuesta a buscar:", "Buscar Encuesta por ID", JOptionPane.PLAIN_MESSAGE);
+        if (idStr == null || idStr.trim().isEmpty()) {
+            return; // Usuario canceló o no ingresó nada
+        }
+
+        try {
+            int idBuscado = Integer.parseInt(idStr.trim());
+
+            // Obtener la lista de encuestas (ya ordenada por nombre por defecto desde el servicio)
+            List<Encuesta> todasLasEncuestas = servicioEncuestas.obtenerTodasLasEncuestas();
+
+            // Usar el nuevo método de búsqueda del servicio
+            Encuesta encuestaEncontrada = servicioEncuestas.buscarEncuestaEnListaPorId(todasLasEncuestas, idBuscado);
+
+            if (encuestaEncontrada != null) {
+                StringBuilder detalles = new StringBuilder();
+                detalles.append("Encuesta Encontrada:\n\n");
+                detalles.append("ID: ").append(encuestaEncontrada.getIdEncuesta()).append("\n");
+                detalles.append("Nombre: ").append(encuestaEncontrada.getNombreEncuesta()).append("\n");
+                detalles.append("Descripción: ").append(encuestaEncontrada.getDescripcion()).append("\n");
+                detalles.append("Estado: ").append(encuestaEncontrada.getEstado()).append("\n");
+                detalles.append("Fecha Inicio: ").append(encuestaEncontrada.getFechaInicioVigencia()).append("\n");
+                detalles.append("Fecha Fin: ").append(encuestaEncontrada.getFechaFinVigencia()).append("\n");
+                detalles.append("Público Objetivo: ").append(encuestaEncontrada.getPublicoObjetivoCantidad()).append("\n");
+                detalles.append("Perfil Requerido: ").append(encuestaEncontrada.getDefinicionPerfil()).append("\n");
+
+                JTextArea textArea = new JTextArea(detalles.toString());
+                textArea.setEditable(false);
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new java.awt.Dimension(400, 200));
+                JOptionPane.showMessageDialog(null, scrollPane, "Detalles de Encuesta ID: " + idBuscado, JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null, "Encuesta con ID " + idBuscado + " no encontrada.", "Búsqueda sin Resultados", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "El ID ingresado no es un número válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Ocurrió un error inesperado durante la búsqueda: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 }

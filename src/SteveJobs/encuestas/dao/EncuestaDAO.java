@@ -1,11 +1,9 @@
 /*
- * Módulo Responsable: Admin. de Encuestas
- * Autores: Alfredo Swidin
- * Versión: 2.0 (Reescritura)
- * Fecha: 15/06/2025
+ * Autores del Módulo:
+ * - Alfredo Swidin
  *
- * Descripción del Archivo:
- * Clase DAO para realizar operaciones CRUD en la tabla 'Encuestas'.
+ * Responsabilidad Principal:
+ * - Acceso a datos de encuestas
  */
 package SteveJobs.encuestas.dao;
 

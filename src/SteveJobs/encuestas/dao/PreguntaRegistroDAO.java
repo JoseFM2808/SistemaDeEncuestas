@@ -1,7 +1,10 @@
 /*
-Autor: José Flores
-
-*/
+ * Autores del Módulo:
+ * - José Flores
+ *
+ * Responsabilidad Principal:
+ * - Acceso a datos de preguntas de registro
+ */
 package SteveJobs.encuestas.dao;
 
 import SteveJobs.encuestas.modelo.PreguntaRegistro;

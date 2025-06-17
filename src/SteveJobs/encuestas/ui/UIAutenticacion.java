@@ -1,8 +1,10 @@
 /*
-Autor: Gian Fri
-
-*/
-
+ * Autores del Módulo:
+ * - Pablo Alegre
+ *
+ * Responsabilidad Principal:
+ * - UI para autenticación de usuarios
+ */
 package SteveJobs.encuestas.ui;
 
 import SteveJobs.encuestas.modelo.Usuario;
@@ -48,8 +50,11 @@ public class UIAutenticacion {
         Usuario usuarioAutenticado = servicioAuth.autenticar(email.trim(), password);
 
         if (usuarioAutenticado != null) {
+            // Usar getNombres() y getApellidos() y getRol() según el modelo Usuario actualizado
+            String nombreCompleto = ( (usuarioAutenticado.getNombres() != null ? usuarioAutenticado.getNombres() : "") + " " +
+                                      (usuarioAutenticado.getApellidos() != null ? usuarioAutenticado.getApellidos() : "") ).trim();
             JOptionPane.showMessageDialog(null,
-                    "Login exitoso. Bienvenido " + usuarioAutenticado.getNombresApellidos() + "!",
+                    "Login exitoso. Bienvenido " + nombreCompleto + "!",
                     "Éxito",
                     JOptionPane.INFORMATION_MESSAGE);
             return usuarioAutenticado;
@@ -80,8 +85,8 @@ public class UIAutenticacion {
 
         if (usuario != null) {
             System.out.println("Usuario autenticado: " + usuario.getEmail());
-            System.out.println("ID: " + usuario.getIdUsuario());
-            System.out.println("Tipo Nivel: " + usuario.getTipoNivel());
+            System.out.println("ID: " + usuario.getId_usuario()); // Corregido getIdUsuario a getId_usuario
+            System.out.println("Rol: " + usuario.getRol()); // Corregido getTipoNivel a getRol
         } else {
             System.out.println("El login fue cancelado o falló.");
         }

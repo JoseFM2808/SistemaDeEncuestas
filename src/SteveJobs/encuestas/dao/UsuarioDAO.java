@@ -1,13 +1,9 @@
 /*
- * Módulo Responsable: Gestión de Entidades Base (Usuarios y Preguntas)
- * Autores: Pablo Alegre
- * Versión: 2.0 (Reescritura)
- * Fecha: 15/06/2025
+ * Autores del Módulo:
+ * - Pablo Alegre
  *
- * Descripción del Archivo:
- * Clase DAO para realizar operaciones CRUD en la tabla 'usuarios'.
- * Utiliza PreparedStatement para todas las consultas SQL para prevenir inyecciones
- * y asegura el cierre de recursos en bloques finally.
+ * Responsabilidad Principal:
+ * - Acceso a datos de usuarios
  */
 package SteveJobs.encuestas.dao;
 
@@ -33,7 +29,7 @@ public class UsuarioDAO {
      * @return true si el registro fue exitoso, false en caso contrario.
      */
     public boolean crearUsuario(Usuario usuario) {
-        String sql = "INSERT INTO Usuarios (dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Usuarios (dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro, rol) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Connection con = null;
         PreparedStatement ps = null;
         boolean creado = false;
@@ -62,6 +58,7 @@ public class UsuarioDAO {
             } else {
                 ps.setTimestamp(9, new Timestamp(System.currentTimeMillis())); // Default to now
             }
+            ps.setString(10, usuario.getRol()); // Añadir rol
 
             int filasAfectadas = ps.executeUpdate();
             if (filasAfectadas > 0) {
@@ -91,7 +88,7 @@ public class UsuarioDAO {
      * @return El objeto Usuario si se encuentra, null en caso contrario.
      */
     public Usuario obtenerUsuarioPorId(int idUsuario) {
-        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro FROM Usuarios WHERE id_usuario = ?";
+        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro, rol FROM Usuarios WHERE id_usuario = ?";
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -123,7 +120,7 @@ public class UsuarioDAO {
      * @return El objeto Usuario si se encuentra, null en caso contrario.
      */
     public Usuario obtenerUsuarioPorDNI(String dni) {
-        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro FROM Usuarios WHERE dni = ?";
+        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro, rol FROM Usuarios WHERE dni = ?";
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -155,7 +152,7 @@ public class UsuarioDAO {
      * @return El objeto Usuario si se encuentra, null en caso contrario.
      */
     public Usuario obtenerUsuarioPorEmail(String email) {
-        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro FROM Usuarios WHERE email = ?";
+        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro, rol FROM Usuarios WHERE email = ?";
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -188,7 +185,8 @@ public class UsuarioDAO {
      * @return true si la actualización fue exitosa, false en caso contrario.
      */
     public boolean actualizarUsuario(Usuario usuario) {
-        String sql = "UPDATE Usuarios SET dni = ?, nombres = ?, apellidos = ?, email = ?, fecha_nacimiento = ?, genero = ?, distrito_residencia = ? WHERE id_usuario = ?";
+        // El rol se actualiza aquí también, si es necesario. Si no, se puede quitar de la sentencia SQL.
+        String sql = "UPDATE Usuarios SET dni = ?, nombres = ?, apellidos = ?, email = ?, fecha_nacimiento = ?, genero = ?, distrito_residencia = ?, rol = ? WHERE id_usuario = ?";
         Connection con = null;
         PreparedStatement ps = null;
         boolean actualizado = false;
@@ -208,7 +206,9 @@ public class UsuarioDAO {
             }
             ps.setString(6, usuario.getGenero());
             ps.setString(7, usuario.getDistrito_residencia());
-            ps.setInt(8, usuario.getId_usuario());
+            ps.setString(8, usuario.getRol()); // Actualizar rol
+            ps.setInt(9, usuario.getId_usuario());
+
 
             int filasAfectadas = ps.executeUpdate();
             if (filasAfectadas > 0) {
@@ -302,7 +302,7 @@ public class UsuarioDAO {
      * @return Una lista de objetos Usuario.
      */
     public List<Usuario> obtenerTodosLosUsuarios() {
-        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro FROM Usuarios";
+        String sql = "SELECT id_usuario, dni, nombres, apellidos, email, clave, fecha_nacimiento, genero, distrito_residencia, fecha_registro, rol FROM Usuarios";
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -325,32 +325,6 @@ public class UsuarioDAO {
             ConexionDB.cerrar(con);
         }
         return usuarios;
-    }
-
-    /**
-     * Valida las credenciales de un usuario.
-     * Busca un usuario por email y compara su clave almacenada con la proporcionada.
-     *
-     * @param email El email del usuario a validar.
-     * @param clave La clave proporcionada para la validación.
-     * @return El objeto {@link Usuario} si el email existe y la clave coincide, {@code null} en caso contrario.
-     */
-    public Usuario validarUsuario(String email, String clave) {
-        Usuario usuario = obtenerUsuarioPorEmail(email);
-
-        if (usuario != null) {
-            // Comparación directa de claves. Si se usara hashing,
-            // aquí se compararía el hash de la clave proporcionada con la almacenada.
-            if (usuario.getClave().equals(clave)) {
-                System.out.println("UsuarioDAO: Usuario '" + email + "' validado exitosamente.");
-                return usuario;
-            } else {
-                System.out.println("UsuarioDAO: Clave incorrecta para el usuario '" + email + "'.");
-            }
-        } else {
-            System.out.println("UsuarioDAO: No se encontró usuario con email '" + email + "' para validación.");
-        }
-        return null;
     }
 
     // --- FIN DE MÉTODOS CRUD ---
@@ -381,6 +355,7 @@ public class UsuarioDAO {
         usuario.setGenero(rs.getString("genero"));
         usuario.setDistrito_residencia(rs.getString("distrito_residencia"));
         usuario.setFecha_registro(rs.getTimestamp("fecha_registro"));
+        usuario.setRol(rs.getString("rol")); // Mapear rol
         return usuario;
     }
     // --- FIN DE MÉTODOS AUXILIARES ---
